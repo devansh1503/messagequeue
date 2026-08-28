@@ -1,6 +1,10 @@
 package com.devansh.messagequeue.consumer;
 
+import com.devansh.messagequeue.message.Message;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/consumer-groups")
@@ -9,11 +13,31 @@ public class ConsumerGroupController {
     public ConsumerGroupController(ConsumerGroupService consumerGroupService) {
         this.consumerGroupService = consumerGroupService;
     }
+
+    @PostMapping("/{group}/join")
+    public ConsumerGroup join(@PathVariable String group, @RequestBody JoinGroupRequest request){
+        return consumerGroupService.join(group, request.topic(), request.consumerId());
+    }
+
+    @DeleteMapping("/{group}/consumers/{consumerId}")
+    public void leave(@PathVariable String group, @PathVariable String consumerId){
+        consumerGroupService.leave(group, consumerId);
+    }
+
+    @GetMapping("/{group}/consumers/{consumerId}/partitions")
+    public List<Integer> partitions(@PathVariable String group, @PathVariable String consumerId){
+        return consumerGroupService.getAssignedPartitions(group, consumerId);
+    }
+
+    @GetMapping("/{group}/consumers/{consumerId}/messages")
+    public Map<Integer, List<Message>> messages(@PathVariable String group, @PathVariable String consumerId, @RequestParam(defaultValue = "10") int limit){
+        return consumerGroupService.consume(group, consumerId, limit);
+    }
+
     @PostMapping("/{group}/offsets")
     public void commit(@PathVariable String group, @RequestBody CommitOffsetRequest request){
         consumerGroupService.commit(
                 group,
-                request.topic(),
                 request.partition(),
                 request.offset()
         );
@@ -25,6 +49,6 @@ public class ConsumerGroupController {
             @RequestParam String topic,
             @RequestParam int partition
     ){
-        return consumerGroupService.getCommitedOffset(group,topic,partition);
+        return consumerGroupService.getCommitedOffset(group,partition);
     }
 }

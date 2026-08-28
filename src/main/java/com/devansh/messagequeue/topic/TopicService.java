@@ -41,4 +41,8 @@ public class TopicService {
 
         return topic.getPartition(partitionId).read(offset, limit);
     }
+
+    public Topic getTopic(String topicName){
+        return topics.get(topicName);
+    }
 }
