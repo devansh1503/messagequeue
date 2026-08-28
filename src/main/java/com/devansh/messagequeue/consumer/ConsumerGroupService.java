@@ -3,6 +3,7 @@ package com.devansh.messagequeue.consumer;
 import com.devansh.messagequeue.message.Message;
 import com.devansh.messagequeue.topic.Topic;
 import com.devansh.messagequeue.topic.TopicService;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ConsumerGroupService {
+    private static final long HEARTBEAT_TIMEOUT_MS = 15_000;
     private final ConcurrentHashMap<String, ConsumerGroup> groups =
             new ConcurrentHashMap<>();
     private final TopicService topicService;
@@ -30,6 +32,9 @@ public class ConsumerGroupService {
         );
 
         group.getConsumers().add(consumerId);
+
+        group.getLastHeartbeats().put(consumerId, System.currentTimeMillis());
+
         rebalance(group, topic.getPartitionCount());
 
         return group;
@@ -38,8 +43,14 @@ public class ConsumerGroupService {
     public synchronized void leave(String groupName, String consumerId){
         ConsumerGroup group = groups.get(groupName);
         group.getConsumers().remove(consumerId);
+        group.getLastHeartbeats().remove(consumerId);
         Topic topic = topicService.getTopic(group.getTopic());
         rebalance(group, topic.getPartitionCount());
+    }
+
+    public void heartbeat(String groupName, String consumerId){
+        ConsumerGroup group = groups.get(groupName);
+        group.getLastHeartbeats().put(consumerId, System.currentTimeMillis());
     }
 
     private void rebalance(ConsumerGroup group, int partitionCount){
@@ -82,6 +93,29 @@ public class ConsumerGroupService {
         return result;
     }
 
+    public Map<Integer, List<Message>> longPoll(String groupName, String consumerId, int limit, long timeoutMs){
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while(System.currentTimeMillis() < deadline){
+            Map<Integer, List<Message>> messages =
+                    consume(groupName, consumerId, limit);
+
+            boolean hasMessages = messages.values().stream().anyMatch(list -> !list.isEmpty());
+
+            if(!hasMessages){
+                return messages;
+            }
+
+            try{
+                Thread.sleep(200);
+            }catch(InterruptedException e){
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        return consume(groupName, consumerId, limit);
+    }
+
     public void commit(String groupName, int partition, long offset){
         ConsumerGroup group = groups.get(groupName);
         group.getCommitedOffsets().put(partition, offset);
@@ -94,5 +128,27 @@ public class ConsumerGroupService {
 
     public ConsumerGroup getGroup(String groupName){
         return groups.get(groupName);
+    }
+
+    @Scheduled(fixedRate = 5000)
+    public void removeDeadConsumers(){
+        long now = System.currentTimeMillis();
+        for(ConsumerGroup group: groups.values()){
+            List<String> deadConsumers = group.getLastHeartbeats()
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> now - entry.getValue() > HEARTBEAT_TIMEOUT_MS)
+                    .map(Map.Entry::getKey)
+                    .toList();
+
+            for(String consumerId: deadConsumers){
+                System.out.println("Consumer timed out: " + consumerId + " Group= "+ group.getName());
+
+                group.getConsumers().remove(consumerId);
+                group.getLastHeartbeats().remove(consumerId);
+                Topic topic = topicService.getTopic(group.getTopic());
+                rebalance(group, topic.getPartitionCount());
+            }
+        }
     }
 }

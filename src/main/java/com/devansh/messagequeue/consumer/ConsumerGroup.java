@@ -16,6 +16,8 @@ public class ConsumerGroup {
             new ConcurrentHashMap<>();
     private final Map<Integer, Long> commitedOffsets =
             new ConcurrentHashMap<>();
+    private final Map<String, Long> lastHeartbeats =
+            new ConcurrentHashMap<>();
 
     public ConsumerGroup(String name, String topic) {
         this.name = name;

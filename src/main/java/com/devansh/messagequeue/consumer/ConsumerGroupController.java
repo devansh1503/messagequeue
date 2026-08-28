@@ -30,8 +30,13 @@ public class ConsumerGroupController {
     }
 
     @GetMapping("/{group}/consumers/{consumerId}/messages")
-    public Map<Integer, List<Message>> messages(@PathVariable String group, @PathVariable String consumerId, @RequestParam(defaultValue = "10") int limit){
-        return consumerGroupService.consume(group, consumerId, limit);
+    public Map<Integer, List<Message>> messages(
+            @PathVariable String group,
+            @PathVariable String consumerId,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "30000") long timeout
+    ){
+        return consumerGroupService.longPoll(group, consumerId, limit, timeout);
     }
 
     @PostMapping("/{group}/offsets")
@@ -50,5 +55,10 @@ public class ConsumerGroupController {
             @RequestParam int partition
     ){
         return consumerGroupService.getCommitedOffset(group,partition);
+    }
+
+    @PostMapping("/{group}/consumers/{consumerId}/heartbeat")
+    public void heartbeat(@PathVariable String group, @PathVariable String consumerId){
+        consumerGroupService.heartbeat(group, consumerId);
     }
 }
