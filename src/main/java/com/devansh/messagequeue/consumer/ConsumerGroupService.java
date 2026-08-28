@@ -101,7 +101,7 @@ public class ConsumerGroupService {
 
             boolean hasMessages = messages.values().stream().anyMatch(list -> !list.isEmpty());
 
-            if(!hasMessages){
+            if(hasMessages){
                 return messages;
             }
 
