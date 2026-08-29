@@ -29,4 +29,9 @@ public class BrokerClient {
         String url = "http://"+broker.host()+":"+broker.port()+"/internal/replication/"+topic+"/"+partition;
         restClient.post().uri(url).body(message).retrieve().toBodilessEntity();
     }
+
+    public void sendHeartbeat(BrokerNode broker, int senderBrokerId){
+        String url = "http://"+broker.host()+":"+broker.port()+"/internal/cluster/heartbeat/"+senderBrokerId;
+        restClient.post().uri(url).retrieve().toBodilessEntity();
+    }
 }
