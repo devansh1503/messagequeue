@@ -49,8 +49,8 @@ public class ClusterMetadataService {
         for(Integer replica : replicas){
             if(brokerHeartbeatService.isBrokerAlive(replica)){
                 leaderOverrides.put(key, replica);
+                return replica;
             }
-            return replica;
         }
 
         throw new IllegalStateException("No Alive Replica available");

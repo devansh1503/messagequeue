@@ -2,6 +2,9 @@ package com.devansh.messagequeue.cluster;
 
 import com.devansh.messagequeue.broker.BrokerIdentity;
 import com.devansh.messagequeue.broker.BrokerNode;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +20,18 @@ public class BrokerHeartbeatService {
     private final List<BrokerNode> brokers;
     private final BrokerIdentity brokerIdentity;
     private final BrokerClient brokerClient;
+    private final TaskExecutor taskExecutor;
 
-    public BrokerHeartbeatService(ClusterConfig clusterConfig, BrokerIdentity brokerIdentity, BrokerClient brokerClient) {
+    public BrokerHeartbeatService(
+            ClusterConfig clusterConfig,
+            BrokerIdentity brokerIdentity,
+            BrokerClient brokerClient,
+            @Qualifier("applicationTaskExecutor")TaskExecutor taskExecutor
+            ) {
         this.brokers = clusterConfig.getBrokers();
         this.brokerIdentity = brokerIdentity;
         this.brokerClient = brokerClient;
+        this.taskExecutor = taskExecutor;
         long now = System.currentTimeMillis();
 
         for(BrokerNode broker : brokers) {
@@ -53,12 +63,13 @@ public class BrokerHeartbeatService {
             if(broker.id() == brokerIdentity.getBrokerId()) {
                 continue;
             }
-
-            try{
-                brokerClient.sendHeartbeat(broker, brokerIdentity.getBrokerId());
-            }catch (Exception e){
-                System.out.println(e.getMessage());
-            }
+            taskExecutor.execute(() -> {
+                try {
+                    brokerClient.sendHeartbeat(broker, brokerIdentity.getBrokerId());
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+            });
         }
     }
 
