@@ -45,4 +45,71 @@ public class TopicService {
     public Topic getTopic(String topicName){
         return topics.get(topicName);
     }
+
+    public List<TopicInfo> getTopics(){
+        return topics.values()
+                .stream()
+                .map(this::toTopicInfo)
+                .sorted(
+                        java.util.Comparator.comparing(
+                                TopicInfo::name
+                        )
+                )
+                .toList();
+    }
+
+    public TopicInfo getTopicInfo(String topicName){
+        Topic topic = topics.get(topicName);
+
+        if(topic == null){
+            throw new IllegalArgumentException(
+                    "Topic not found: " + topicName
+            );
+        }
+
+        return toTopicInfo(topic);
+    }
+
+    private TopicInfo toTopicInfo(Topic topic){
+
+        List<PartitionInfo> partitions =
+                topic.getPartitions()
+                        .stream()
+                        .map(partition ->
+                                new PartitionInfo(
+                                        partition.getId(),
+                                        partition.getNextOffset()
+                                )
+                        )
+                        .toList();
+
+        return new TopicInfo(
+                topic.getTopicName(),
+                topic.getPartitionCount(),
+                partitions
+        );
+    }
+
+    public int getTopicCount(){
+        return topics.size();
+    }
+
+    public int getTotalPartitionCount(){
+        return topics.values()
+                .stream()
+                .mapToInt(Topic::getPartitionCount)
+                .sum();
+    }
+
+    public long getTotalMessageCount(){
+        return topics.values()
+                .stream()
+                .flatMap(topic ->
+                        topic.getPartitions().stream()
+                )
+                .mapToLong(partition ->
+                        partition.getNextOffset()
+                )
+                .sum();
+    }
 }

@@ -151,4 +151,100 @@ public class ConsumerGroupService {
             }
         }
     }
+
+    public List<ConsumerGroupSummary> getGroups(){
+        return groups.values()
+                .stream()
+                .map(group ->
+                        new ConsumerGroupSummary(
+                                group.getName(),
+                                group.getTopic(),
+                                group.getConsumers().size()
+                        )
+                )
+                .sorted(
+                        Comparator.comparing(
+                                ConsumerGroupSummary::name
+                        )
+                )
+                .toList();
+    }
+
+    public ConsumerGroupInfo getGroupInfo(
+            String groupName
+    ){
+        ConsumerGroup group = groups.get(groupName);
+
+        if(group == null){
+            throw new IllegalArgumentException(
+                    "Consumer group not found: "
+                            + groupName
+            );
+        }
+
+        long now = System.currentTimeMillis();
+
+        List<ConsumerInfo> consumers =
+                group.getConsumers()
+                        .stream()
+                        .sorted()
+                        .map(consumerId -> {
+
+                            long lastHeartbeat =
+                                    group.getLastHeartbeats()
+                                            .getOrDefault(
+                                                    consumerId,
+                                                    0L
+                                            );
+
+                            String status =
+                                    now - lastHeartbeat
+                                            <= HEARTBEAT_TIMEOUT_MS
+                                            ? "ALIVE"
+                                            : "DEAD";
+
+                            List<Integer> partitions =
+                                    group.getAssignments()
+                                            .entrySet()
+                                            .stream()
+                                            .filter(entry ->
+                                                    entry.getValue()
+                                                            .equals(consumerId)
+                                            )
+                                            .map(Map.Entry::getKey)
+                                            .sorted()
+                                            .toList();
+
+                            return new ConsumerInfo(
+                                    consumerId,
+                                    status,
+                                    lastHeartbeat,
+                                    partitions
+                            );
+                        })
+                        .toList();
+
+        return new ConsumerGroupInfo(
+                group.getName(),
+                group.getTopic(),
+                "STABLE",
+                consumers,
+                new TreeMap<>(
+                        group.getCommitedOffsets()
+                )
+        );
+    }
+
+    public int getGroupCount(){
+        return groups.size();
+    }
+
+    public int getActiveConsumerCount(){
+        return groups.values()
+                .stream()
+                .mapToInt(group ->
+                        group.getConsumers().size()
+                )
+                .sum();
+    }
 }

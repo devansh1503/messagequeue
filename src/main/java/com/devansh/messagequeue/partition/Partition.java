@@ -41,4 +41,7 @@ public class Partition {
         return id;
     }
 
+    public long getNextOffset(){
+        return nextOffset.get();
+    }
 }

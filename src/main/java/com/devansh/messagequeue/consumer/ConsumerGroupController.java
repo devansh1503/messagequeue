@@ -8,6 +8,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/consumer-groups")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ConsumerGroupController {
     private final ConsumerGroupService consumerGroupService;
     public ConsumerGroupController(ConsumerGroupService consumerGroupService) {
@@ -61,4 +62,19 @@ public class ConsumerGroupController {
     public void heartbeat(@PathVariable String group, @PathVariable String consumerId){
         consumerGroupService.heartbeat(group, consumerId);
     }
+
+    @GetMapping
+    public List<ConsumerGroupSummary> getGroups(){
+        return consumerGroupService.getGroups();
+    }
+
+    @GetMapping("/{group}")
+    public ConsumerGroupInfo getGroup(
+            @PathVariable String group
+    ){
+        return consumerGroupService
+                .getGroupInfo(group);
+    }
+
+
 }
