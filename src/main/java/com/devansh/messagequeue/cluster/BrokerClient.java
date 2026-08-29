@@ -1,6 +1,7 @@
 package com.devansh.messagequeue.cluster;
 
 import com.devansh.messagequeue.broker.BrokerNode;
+import com.devansh.messagequeue.message.AckMode;
 import com.devansh.messagequeue.message.Message;
 import com.devansh.messagequeue.message.ProduceMessageRequest;
 import com.devansh.messagequeue.message.ProduceMessageResponse;
@@ -14,8 +15,13 @@ public class BrokerClient {
         this.restClient = RestClient.create();
     }
 
-    public ProduceMessageResponse produce(BrokerNode broker, String topic, int partition, ProduceMessageRequest request){
-        String url = "http://"+broker.host()+":"+broker.port()+"/internal/topics/"+topic+"/partitions/"+partition+"/messages";
+    public ProduceMessageResponse produce(BrokerNode broker, String topic, int partition, ProduceMessageRequest request, AckMode ackMode) {
+        String acks = switch (ackMode) {
+            case ZERO -> "0";
+            case ONE -> "1";
+            case ALL -> "all";
+        };
+        String url = "http://"+broker.host()+":"+broker.port()+"/internal/topics/"+topic+"/partitions/"+partition+"/messages?acks="+acks;
         return restClient.post().uri(url).body(request).retrieve().body(ProduceMessageResponse.class);
     }
 

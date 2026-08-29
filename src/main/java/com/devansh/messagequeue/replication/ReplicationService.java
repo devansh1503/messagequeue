@@ -13,11 +13,18 @@ public class ReplicationService {
     private final ClusterMetadataService clusterMetadataService;
     private final BrokerClient brokerClient;
     private final BrokerIdentity brokerIdentity;
+    private final ReplicationStateService replicationStateService;
 
-    public ReplicationService(ClusterMetadataService clusterMetadataService, BrokerClient brokerClient, BrokerIdentity brokerIdentity) {
+    public ReplicationService(
+            ClusterMetadataService clusterMetadataService,
+            BrokerClient brokerClient,
+            BrokerIdentity brokerIdentity,
+            ReplicationStateService replicationStateService
+    ) {
         this.clusterMetadataService = clusterMetadataService;
         this.brokerClient = brokerClient;
         this.brokerIdentity = brokerIdentity;
+        this.replicationStateService = replicationStateService;
     }
 
     public void replicate(String topic, int partition, Message message){
@@ -28,7 +35,12 @@ public class ReplicationService {
             }
 
             BrokerNode replica = clusterMetadataService.getBroker(brokerId);
-            brokerClient.replicate(replica, topic, partition, message);
+            try {
+                brokerClient.replicate(replica, topic, partition, message);
+                replicationStateService.recordReplicaOffset(topic, partition, brokerId, message.offset());
+            }catch (Exception e){
+                System.out.println("Replication Failed For "+topic+":"+partition+" to broker "+brokerId);
+            }
         }
     }
 }

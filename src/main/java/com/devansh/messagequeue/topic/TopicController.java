@@ -1,5 +1,6 @@
 package com.devansh.messagequeue.topic;
 
+import com.devansh.messagequeue.message.AckMode;
 import com.devansh.messagequeue.message.ProduceMessageRequest;
 import com.devansh.messagequeue.message.ProduceMessageResponse;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +24,13 @@ public class TopicController {
     }
 
     @PostMapping("/{topic}/messages")
-    public ProduceMessageResponse produce(@PathVariable String topic, @RequestBody ProduceMessageRequest request) {
-        return produceRouteService.produce(topic, request);
+    public ProduceMessageResponse produce(
+            @PathVariable String topic,
+            @RequestParam(defaultValue = "all") String acks,
+            @RequestBody ProduceMessageRequest request
+    ) {
+        AckMode ackMode = AckMode.from(acks);
+        return produceRouteService.produce(topic, request, ackMode);
     }
 
     @GetMapping
