@@ -13,7 +13,7 @@ public class BrokerIdentity {
 
     public BrokerIdentity(
             @Value("${broker.id}") int brokerId,
-            @Value("${broker.host:localhost") String host,
+            @Value("${broker.host:localhost}") String host,
             @Value("${server.port:8080}") int port
     ){
         this.brokerId = brokerId;
