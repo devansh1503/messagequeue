@@ -11,8 +11,10 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 public class TopicController {
     private final TopicService topicService;
-    public TopicController(TopicService topicService) {
+    private final ProduceRouteService produceRouteService;
+    public TopicController(TopicService topicService, ProduceRouteService produceRouteService) {
         this.topicService = topicService;
+        this.produceRouteService = produceRouteService;
     }
 
     @PostMapping
@@ -22,7 +24,7 @@ public class TopicController {
 
     @PostMapping("/{topic}/messages")
     public ProduceMessageResponse produce(@PathVariable String topic, @RequestBody ProduceMessageRequest request) {
-        return topicService.produce(topic, request.key(), request.value());
+        return produceRouteService.produce(topic, request);
     }
 
     @GetMapping

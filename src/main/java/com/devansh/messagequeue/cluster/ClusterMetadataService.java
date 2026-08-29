@@ -24,4 +24,8 @@ public class ClusterMetadataService {
 
         return new PartitionMetaData(topic, partition, leader.id(), List.of(leader.id(), follower.id()));
     }
+
+    public BrokerNode getBroker(int brokerId){
+        return brokers.stream().filter(b -> b.id() == brokerId).findFirst().orElse(null);
+    }
 }

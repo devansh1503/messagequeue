@@ -112,4 +112,22 @@ public class TopicService {
                 )
                 .sum();
     }
+
+    public int selectPartition(String topicName, String key){
+        Topic topic = getTopic(topicName);
+        return partitioner.select(key, topic.getPartitionCount());
+    }
+
+    public ProduceMessageResponse produceToPartition(
+            String topicName,
+            int partitionId,
+            String key,
+            String value
+    ){
+        Topic topic = getTopic(topicName);
+        Partition partition = topic.getPartition(partitionId);
+        Message message = partition.append(key, value, topicName);
+
+        return new ProduceMessageResponse(topicName, partitionId, message.offset());
+    }
 }
