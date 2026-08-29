@@ -42,7 +42,7 @@ public class ProduceRouteService {
             );
         }
 
-        BrokerNode leader = clusterMetadataService.getBroker(brokerIdentity.getBrokerId());
+        BrokerNode leader = clusterMetadataService.getBroker(metaData.leaderBrokerId());
         return brokerClient.produce(
                 leader,
                 topic,

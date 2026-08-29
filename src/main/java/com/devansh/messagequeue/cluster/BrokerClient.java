@@ -9,8 +9,8 @@ import org.springframework.web.client.RestClient;
 @Component
 public class BrokerClient {
     private final RestClient restClient;
-    public BrokerClient(RestClient.Builder builder) {
-        this.restClient = builder.build();
+    public BrokerClient() {
+        this.restClient = RestClient.create();
     }
 
     public ProduceMessageResponse produce(BrokerNode broker, String topic, int partition, ProduceMessageRequest request){
