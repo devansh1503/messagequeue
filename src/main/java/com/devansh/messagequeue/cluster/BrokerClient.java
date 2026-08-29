@@ -1,6 +1,7 @@
 package com.devansh.messagequeue.cluster;
 
 import com.devansh.messagequeue.broker.BrokerNode;
+import com.devansh.messagequeue.message.Message;
 import com.devansh.messagequeue.message.ProduceMessageRequest;
 import com.devansh.messagequeue.message.ProduceMessageResponse;
 import org.springframework.stereotype.Component;
@@ -16,5 +17,10 @@ public class BrokerClient {
     public ProduceMessageResponse produce(BrokerNode broker, String topic, int partition, ProduceMessageRequest request){
         String url = "http://"+broker.host()+":"+broker.port()+"/internal/topics/"+topic+"/partitions/"+partition+"/messages";
         return restClient.post().uri(url).body(request).retrieve().body(ProduceMessageResponse.class);
+    }
+
+    public void replicate(BrokerNode broker, String topic, int partition, Message message){
+        String url = "http://"+broker.host()+":"+broker.port()+"/internal/replication/"+topic+"/"+partition;
+        restClient.post().uri(url).body(message).retrieve().toBodilessEntity();
     }
 }

@@ -118,16 +118,37 @@ public class TopicService {
         return partitioner.select(key, topic.getPartitionCount());
     }
 
-    public ProduceMessageResponse produceToPartition(
+    public Message appendToPartition(
             String topicName,
             int partitionId,
             String key,
             String value
     ){
         Topic topic = getTopic(topicName);
+        if(topic == null){
+            throw new IllegalArgumentException("Topic not found: " + topicName);
+        }
         Partition partition = topic.getPartition(partitionId);
-        Message message = partition.append(key, value, topicName);
+        return partition.append(key, value, topicName);
+    }
+
+    public ProduceMessageResponse produceToPartition(
+            String topicName,
+            int partitionId,
+            String key,
+            String value
+    ){
+        Message message = appendToPartition(topicName, partitionId, key, value);
 
         return new ProduceMessageResponse(topicName, partitionId, message.offset());
+    }
+
+    public void appendReplica(String topicName, int partitionId, Message message){
+        Topic topic = getTopic(topicName);
+        if(topic == null){
+            throw new IllegalArgumentException("Topic not found: " + topicName);
+        }
+        Partition partition = topic.getPartition(partitionId);
+        partition.appendReplica(message);
     }
 }

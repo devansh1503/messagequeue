@@ -44,4 +44,11 @@ public class Partition {
     public long getNextOffset(){
         return nextOffset.get();
     }
+
+    public void appendReplica(Message message){
+        log.append(message);
+        nextOffset.set(
+                Math.max(nextOffset.get(), message.offset()+1)
+        );
+    }
 }
