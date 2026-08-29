@@ -10,6 +10,10 @@ import java.util.List;
 public class ClusterMetadataService {
     private final List<BrokerNode> brokers;
 
+    public ClusterMetadataService(ClusterConfig clusterConfig){
+        this.brokers = clusterConfig.getBrokers();
+    }
+
     public PartitionMetaData getPartitionMetaData(
             String topic,
             int partition
