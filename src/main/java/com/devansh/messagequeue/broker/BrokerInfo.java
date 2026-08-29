@@ -1,6 +1,9 @@
 package com.devansh.messagequeue.broker;
 
 public record BrokerInfo(
+        int brokerId,
+        String host,
+        int port,
         String status,
         int topics,
         int partitions,

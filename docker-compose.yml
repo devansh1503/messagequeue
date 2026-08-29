@@ -1,0 +1,45 @@
+services:
+
+  broker-1:
+    build: .
+    image: messagequeue
+    container_name: broker-1
+    environment:
+      BROKER_ID: 1
+      BROKER_HOST: broker-1
+      SERVER_PORT: 8080
+    ports:
+      - "8081:8080"
+    volumes:
+      - broker1-data:/app/data
+
+  broker-2:
+    build: .
+    image: messagequeue
+    container_name: broker-2
+    environment:
+      BROKER_ID: 2
+      BROKER_HOST: broker-2
+      SERVER_PORT: 8080
+    ports:
+      - "8082:8080"
+    volumes:
+      - broker2-data:/app/data
+
+  broker-3:
+    build: .
+    image: messagequeue
+    container_name: broker-3
+    environment:
+      BROKER_ID: 3
+      BROKER_HOST: broker-3
+      SERVER_PORT: 8080
+    ports:
+      - "8083:8080"
+    volumes:
+      - broker3-data:/app/data
+
+volumes:
+  broker1-data:
+  broker2-data:
+  broker3-data:

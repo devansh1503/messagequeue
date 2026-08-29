@@ -14,20 +14,26 @@ public class BrokerController {
 
     private final TopicService topicService;
     private final ConsumerGroupService consumerGroupService;
+    private final BrokerIdentity brokerIdentity;
 
     public BrokerController(
             TopicService topicService,
-            ConsumerGroupService consumerGroupService
+            ConsumerGroupService consumerGroupService,
+            BrokerIdentity brokerIdentity
     ){
         this.topicService = topicService;
         this.consumerGroupService =
                 consumerGroupService;
+        this.brokerIdentity = brokerIdentity;
     }
 
     @GetMapping
     public BrokerInfo getBrokerInfo(){
 
         return new BrokerInfo(
+                brokerIdentity.getBrokerId(),
+                brokerIdentity.getHost(),
+                brokerIdentity.getPort(),
                 "RUNNING",
                 topicService.getTopicCount(),
                 topicService.getTotalPartitionCount(),
